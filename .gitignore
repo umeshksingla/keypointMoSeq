@@ -129,5 +129,10 @@ dmypy.json
 .pyre/
 
 # examples directory
+examples
 examples/demo*
 examples/moseq*
+
+# VSC stuff
+.idea
+.idea/**
