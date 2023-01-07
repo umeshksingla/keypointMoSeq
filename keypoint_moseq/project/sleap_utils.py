@@ -47,13 +47,21 @@ import tqdm
 from textwrap import fill
 from keypoint_moseq.project.io import generate_config
 from scipy.interpolate import interp1d
+import pandas as pd
 
-def load_keypoints_from_slp_file(path_to_slp_file, use_instance=0, **kwargs):
+def load_keypoints_from_slp_file(path_to_slp_file, downsample=False, **kwargs):
     """
     This function takes a path to a single sleap-tracked experiment and looks for tracked and proofread .h5 files. 
     This is then used to load tracks of instance `use_instance` and returns the data in a numpy array with [frames, coordinates, 2] where the indices of coordinates to keep are specified in use_bodyparts.
     
     """
+    def downsample_and_smooth(tracks, window_size=5, stride=3):
+        """Smooth and downsample input data by averaging across a window."""
+        tracks_df = pd.DataFrame(tracks, index=None)
+        tracks_df_rolling_mean = tracks_df.rolling(window_size).mean()
+        tracks_df_rolling_mean_stride = tracks_df.iloc[::stride, :]
+        return tracks_df_rolling_mean_stride
+
     def fill_missing_tracks(Y, kind="linear"):
         initial_shape = Y.shape
         # Flatten after first dim.
@@ -96,9 +104,13 @@ def load_keypoints_from_slp_file(path_to_slp_file, use_instance=0, **kwargs):
 
     # Fill NaNs
     tracks = fill_missing_tracks(tracks)
+
+    # Downsample
+    if downsample:
+        tracks = downsample_and_smooth(tracks)
     return tracks
 
-def load_keypoints_from_slp_list(list_of_slp_expts, **kwargs):
+def load_keypoints_from_slp_list(list_of_slp_expts, downsample=False, **kwargs):
     """
     This function takes a list of sleap tracked experiments files. Specifically this contains a 
     list of strings pointing to the absolute path to */inference.proofread.cleaned.slp files which have been tracked and proofread. 
@@ -107,7 +119,7 @@ def load_keypoints_from_slp_list(list_of_slp_expts, **kwargs):
     coordinates = {}
     for expt_path in tqdm.tqdm(list_of_slp_expts, desc='Reading coordinates from sleap'):
         expt_id = os.path.split(os.path.dirname(expt_path))[-1]
-        coordinates[expt_id] = load_keypoints_from_slp_file(expt_path, **kwargs)
+        coordinates[expt_id] = load_keypoints_from_slp_file(expt_path, downsample=downsample, **kwargs)
     return coordinates
 
 

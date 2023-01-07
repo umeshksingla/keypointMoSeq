@@ -53,3 +53,14 @@ GPUs: 1/1 available
 3. https://github.com/google/jax#installation
 4. https://github.com/cloudhan/jax-windows-builder
 5. https://askubuntu.com/questions/1338314/setting-up-tensorflow-gpu-conda-environment-with-cuda-11-2-and-cudnn-8-1-8-2-cu 
+
+
+## Sticky bits and sharp edges
+1. If there is a ptxas issue, this means that either cuda-nvcc is not installed or the versions are not compatible with cudnn and the cuda drivers that exist with the system and/or tensorflow versions. 
+`
+conda activate keypoint_moseq_sleap
+nvcc -V 
+conda install -c conda -c nvidia cudatoolkit=11.4 cudnn=8.2
+conda install -c conda -c nvidia cuda-nvcc=11.4 cudnn=8.2
+`
+2. 
