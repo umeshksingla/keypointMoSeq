@@ -62,7 +62,8 @@ def generate_config(project_dir, **kwargs):
         'use_bodyparts': ['BODYPART1','BODYPART2','BODYPART3'],
         'skeleton': [['BODYPART1','BODYPART2'], ['BODYPART2','BODYPART3']],
         'anterior_bodyparts': ['BODYPART1'],
-        'posterior_bodyparts': ['BODYPART3']})
+        'posterior_bodyparts': ['BODYPART3'],
+        'use_instance': 0})
         
     other = update_dict(kwargs, {
         'verbose':True,
@@ -290,25 +291,24 @@ def format_data(coordinates, *, confidences=None, keys=None,
             The location in ``data_dict`` that each batch came from
             in the form of tuples (key, start, end).
     """    
-    
     if keys is None: keys = sorted(coordinates.keys()) 
     coordinates = reindex_by_bodyparts(coordinates, bodyparts, use_bodyparts)
-    confidences = reindex_by_bodyparts(confidences, bodyparts, use_bodyparts)
     
     Y,mask,batch_info = batch(coordinates, batch_length=batch_length, keys=keys)
+    if added_noise_level>0: 
+        Y += np.random.uniform(-added_noise_level,added_noise_level,Y.shape)
     
     if confidences is not None:
+        confidences = reindex_by_bodyparts(confidences, bodyparts, use_bodyparts)
         conf = batch(confidences, batch_length=batch_length, keys=keys)[0]
         if conf.min() < 0: 
             conf = np.maximum(conf,0) 
             warnings.warn(fill(
                 'Negative confidence values are not allowed and will be set to 0.'))
         conf = conf + conf_pseudocount
+        return jax.device_put({'mask':mask, 'Y':Y, 'conf':conf}), batch_info
   
-    if added_noise_level>0: 
-        Y += np.random.uniform(-added_noise_level,added_noise_level,Y.shape)
-        
-    return jax.device_put({'mask':mask, 'Y':Y, 'conf':conf}), batch_info
+    return jax.device_put({'mask':mask, 'Y':Y}), batch_info
 
 
 def save_pca(pca, project_dir, pca_path=None):

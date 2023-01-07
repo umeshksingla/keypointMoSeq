@@ -191,7 +191,7 @@ def transform_data_for_pca(Y, **kwargs):
     Y_flat = (center_embedding(k).T @ Y_aligned).reshape(n,t,(k-1)*d)
     return Y_flat
 
-def fit_pca(*, Y, conf, mask, conf_threshold=0.5, verbose=False,
+def fit_pca(*, Y, mask, conf=None, conf_threshold=0.5, verbose=False,
             PCA_fitting_num_frames=100000, **kwargs):
     
     if conf is not None: 
