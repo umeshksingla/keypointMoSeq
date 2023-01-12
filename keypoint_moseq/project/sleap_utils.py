@@ -49,7 +49,7 @@ from keypoint_moseq.project.io import generate_config
 from scipy.interpolate import interp1d
 import pandas as pd
 
-def load_keypoints_from_slp_file(path_to_slp_file, downsample=False, **kwargs):
+def load_keypoints_from_slp_file(path_to_slp_file, use_instance=1, downsample=False, **kwargs):
     """
     This function takes a path to a single sleap-tracked experiment and looks for tracked and proofread .h5 files. 
     This is then used to load tracks of instance `use_instance` and returns the data in a numpy array with [frames, coordinates, 2] where the indices of coordinates to keep are specified in use_bodyparts.
@@ -57,10 +57,11 @@ def load_keypoints_from_slp_file(path_to_slp_file, downsample=False, **kwargs):
     """
     def downsample_and_smooth(tracks, window_size=5, stride=3):
         """Smooth and downsample input data by averaging across a window."""
-        tracks_df = pd.DataFrame(tracks, index=None)
+        T, K, _ = tracks.shape
+        tracks_df = pd.DataFrame(tracks.reshape(T, -1), index=None)
         tracks_df_rolling_mean = tracks_df.rolling(window_size).mean()
-        tracks_df_rolling_mean_stride = tracks_df.iloc[::stride, :]
-        return tracks_df_rolling_mean_stride
+        tracks_df_rolling_mean_stride = tracks_df.iloc[::stride, :].dropna()
+        return tracks_df_rolling_mean_stride.to_numpy().reshape(-1, K, 2)
 
     def fill_missing_tracks(Y, kind="linear"):
         initial_shape = Y.shape
@@ -110,16 +111,17 @@ def load_keypoints_from_slp_file(path_to_slp_file, downsample=False, **kwargs):
         tracks = downsample_and_smooth(tracks)
     return tracks
 
-def load_keypoints_from_slp_list(list_of_slp_expts, downsample=False, **kwargs):
+def load_keypoints_from_slp_list(list_of_slp_expts, use_instance=1, downsample=False, **kwargs):
     """
     This function takes a list of sleap tracked experiments files. Specifically this contains a 
     list of strings pointing to the absolute path to */inference.proofread.cleaned.slp files which have been tracked and proofread. 
     It creates a dictionary `coordinates` which contains keys that correspond to a unique experiment ID and the values are numpy arrays of [T (frames), K (joints), 2 (xy)]
     """
     coordinates = {}
+    print(use_instance)
     for expt_path in tqdm.tqdm(list_of_slp_expts, desc='Reading coordinates from sleap'):
         expt_id = os.path.split(os.path.dirname(expt_path))[-1]
-        coordinates[expt_id] = load_keypoints_from_slp_file(expt_path, downsample=downsample, **kwargs)
+        coordinates[expt_id] = load_keypoints_from_slp_file(expt_path, use_instance, downsample=downsample, **kwargs)
     return coordinates
 
 
