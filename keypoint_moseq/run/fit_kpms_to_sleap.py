@@ -53,7 +53,7 @@ def load_data_from_expts(sleap_paths, project_dir):
         print(f"Session {k}")
         print(f"Data: {v.shape}")
 
-    data, batch_info = kpm.format_data(coordinates, **config())
+    data, batch_info = kpm.format_data(coordinates, **config)
     return data, batch_info
 
 def run_fit_PCA(data, project_dir):
@@ -63,25 +63,27 @@ def run_fit_PCA(data, project_dir):
     Run scripts to plot and visualize results of PCA fitting. (TODO: How does this work when run from the CL?)
     """
     config = kpm.load_config(project_dir)
-    pca = kpm.fit_pca(project_dir, **config())
+    pca = kpm.fit_pca(**data, **config, conf=None)
     kpm.save_pca(pca, project_dir)
-
     kpm.print_dims_to_explain_variance(pca, 0.9)
-    kpm.plot_scree(pca, project_dir=project_dir)
-    kpm.plot_pcs(pca, project_dir=project_dir, **config())
+    # Visualization might cause CL calls to crash 
+    # so comment and run these lines locally
+    # kpm.plot_scree(pca, project_dir=project_dir)
+    # kpm.plot_pcs(pca, project_dir=project_dir, **config)
 
 def fit_keypoint_ARHMM(project_dir, data, batch_info):
     """
     Load PCA from project_dir and initialize the model.
     Fit AR-HMM
     """
-    kpm.load_config(project_dir)
+    config = kpm.load_config(project_dir)
     pca = kpm.load_pca(project_dir)
-    model = kpm.initialize_model(pca=pca, **data, **config())
+    model = kpm.initialize_model(pca=pca, **data, **config)
     # TODO: WAF to visualize initialized parameters
 
     model, history, name = kpm.fit_model(model, data, batch_info, ar_only=True, 
-                                   num_iters=50, project_dir=project_dir)
+                                   num_iters=50, project_dir=project_dir, 
+                                   plot_every_n_iters=0)
     # TODO: WAF to visualize AR-HMM fit parameters
 
     return model, history, name
@@ -93,18 +95,19 @@ def fit_keypoint_SLDS(project_dir, name):
     """
     checkpoint = kpm.load_checkpoint(project_dir=project_dir, name=name)
     model, history, name = kpm.resume_fitting(**checkpoint, project_dir=project_dir, 
-                                        ar_only=False, num_iters=200, conf=None)
+                                        ar_only=False, num_iters=200, conf=None,
+                                        plot_every_n_iters=0)
 
 
 def main():
     # Main control flow of the experiment
     della = False
     if della:
-        video_dir = r'/scratch/gpfs/shruthi/pair_wt_gold/' 
-        project_dir = r'scratch/gpfs/shruthi/pair_wt_gold/fitting'
-    # else:
-        # video_dir = 
-        # project_dir = 
+        video_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/" 
+        project_dir = r"scratch/gpfs/shruthi/pair_wt_gold/fitting"
+    else:
+        video_dir = r"D:\data\pair_wt_gold"
+        project_dir = r"D:\data\pair_wt_gold\fitting"
     
     # Setup project
     sleap_paths = find_sleap_paths(video_dir)

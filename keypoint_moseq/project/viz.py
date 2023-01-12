@@ -134,7 +134,7 @@ def plot_progress(model, data, history, iteration, path=None,
             assert name is not None and project_dir is not None, fill(
                 'The ``savefig`` option requires either a ``path`` '
                 'or a ``name`` and ``project_dir``')
-            path = os.path.join(project_dir,name,'fitting_progress.pdf')
+            path = os.path.join(project_dir,name,f'fitting_progress_iter_{iteration}.pdf')
         plt.savefig(path)  
     plt.show()
     
