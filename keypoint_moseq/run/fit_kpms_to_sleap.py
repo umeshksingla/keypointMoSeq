@@ -101,10 +101,10 @@ def fit_keypoint_SLDS(project_dir, name):
 
 def main():
     # Main control flow of the experiment
-    della = False
+    della = True
     if della:
         video_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/" 
-        project_dir = r"scratch/gpfs/shruthi/pair_wt_gold/fitting"
+        project_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/fitting"
     else:
         video_dir = r"D:\data\pair_wt_gold"
         project_dir = r"D:\data\pair_wt_gold\fitting"

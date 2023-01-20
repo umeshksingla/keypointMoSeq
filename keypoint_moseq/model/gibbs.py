@@ -174,6 +174,9 @@ def resample_model(data, *, states, params, hypparams, seed,
     states['z'] = resample_stateseqs(
         seed, **data, **states, **params)[0]
     
+    # states['z'], states['zlogliks'] = resample_stateseqs(
+    #     seed, **data, **states, **params)
+    
     if not ar_only:     
 
         if not states_only: 

@@ -11,7 +11,7 @@ from textwrap import fill
 
 from keypoint_moseq.util import *
 from keypoint_moseq.project.io import load_results
-
+from keypoint_moseq.project.sleap_utils import find_matching_sleap_videos
 
 
 def plot_scree(pca, savefig=True, project_dir=None):
@@ -220,7 +220,7 @@ def generate_crowd_movies(
     pre=30, post=60, min_usage=0.005, min_duration=3, dot_radius=4, 
     dot_color=(255,255,255), window_size=112, plot_keypoints=False, 
     use_reindexed=True, sampling_options={}, coordinates=None, 
-    bodyparts=None, use_bodyparts=None, quality=7, **kwargs):
+    bodyparts=None, use_bodyparts=None, quality=7, sleap=False, **kwargs):
     
     assert video_dir is not None, fill(
         'The ``video_dir`` argument is required')
@@ -241,7 +241,10 @@ def generate_crowd_movies(
     if results is None: results = load_results(
         name=name, project_dir=project_dir, path=results_path)
     
-    video_paths = find_matching_videos(results.keys(), video_dir, as_dict=True)
+    if sleap:
+        video_paths = find_matching_sleap_videos(results.keys(), video_dir, as_dict=True)
+    else:
+        video_paths = find_matching_videos(results.keys(), video_dir, as_dict=True)
     videos = {k: OpenCVReader(path) for k,path in video_paths.items()}
     fps = list(videos.values())[0].fps
     

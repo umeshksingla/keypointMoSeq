@@ -202,3 +202,23 @@ def setup_project_from_slp(project_dir, sample_slp_file=None,
     if not os.path.exists(project_dir):
         os.makedirs(project_dir)
     generate_config(project_dir, **options)
+
+
+def find_matching_sleap_videos(keys, video_dir, as_dict=False):
+    """
+    This function assumes that all videos match this pattern
+    video_dir/key/000000.mp4 where the keys are the expt_id.
+    """
+    video_paths = []
+    for key in sorted(keys):
+        matches = list(Path(video_dir).rglob(key))
+        assert len(matches)==1, fill(f'No matches. Check paths and try again.')
+        path_to_vid = os.path.join(matches[0], "000000.mp4")
+        print(path_to_vid)
+        is_path = Path(path_to_vid).is_file()
+        assert is_path is True, fill(f'No matching videos found for {key}')
+        video_paths.append(path_to_vid)
+    if as_dict: return dict(zip(sorted(keys),video_paths))
+    else: return video_paths
+
+

@@ -132,6 +132,7 @@ dmypy.json
 examples
 examples/demo*
 examples/moseq*
+logs/
 
 # VSC stuff
 .idea
