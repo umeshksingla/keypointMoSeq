@@ -11,8 +11,8 @@ import keypoint_moseq as kpm
 from datetime import datetime
 
 SLURM_ARRAY_JOB_ID = int(os.environ["SLURM_ARRAY_TASK_ID"])
-kappa_vals = [1e2, 1e4, 1e6, 1e8, 1e10, 1e12]
-this_kappa = kappa_vals[SLURM_ARRAY_JOB_ID]
+nlags_vals = [1, 3, 5, 10]
+this_lags = nlags_vals[SLURM_ARRAY_JOB_ID]
 
 def copy_updated_config_to_model_dir(project_dir, model_name):
     """
@@ -49,8 +49,8 @@ def main():
                                             project_dir)
 
     # Update hyperparameters
-    kpm.update_config(project_dir, trans_hypparams={'kappa': this_kappa})
-    print(f"Updated the config kappa to be {this_kappa}") 
+    kpm.update_config(project_dir, ar_hypparams={'nlags': this_lags})
+    print(f"Updated the config kappa to be {this_lags}") 
 
     # Create a model name that isn't just the timestamp to avoid overwrites
     name = str(datetime.now().strftime('%Y_%m_%d-%H_%M_%S')) + f"_{SLURM_ARRAY_JOB_ID}"

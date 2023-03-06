@@ -71,7 +71,7 @@ def run_fit_PCA(data, project_dir):
     # kpm.plot_scree(pca, project_dir=project_dir)
     # kpm.plot_pcs(pca, project_dir=project_dir, **config)
 
-def fit_keypoint_ARHMM(project_dir, data, batch_info):
+def fit_keypoint_ARHMM(project_dir, data, batch_info, name=None):
     """
     Load PCA from project_dir and initialize the model.
     Fit AR-HMM
@@ -83,7 +83,7 @@ def fit_keypoint_ARHMM(project_dir, data, batch_info):
 
     model, history, name = kpm.fit_model(model, data, batch_info, ar_only=True, 
                                    num_iters=50, project_dir=project_dir, 
-                                   plot_every_n_iters=0)
+                                   plot_every_n_iters=0, name=name)
     # TODO: WAF to visualize AR-HMM fit parameters
 
     return model, history, name
@@ -102,6 +102,7 @@ def fit_keypoint_SLDS(project_dir, name):
 def main():
     # Main control flow of the experiment
     della = True
+    hyperparams_csv = None # Define settings of parameters for model fitting
     if della:
         video_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/" 
         project_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/fitting"
@@ -112,7 +113,7 @@ def main():
     # Setup project
     sleap_paths = find_sleap_paths(video_dir)
     sample_sleap_path = sleap_paths[0]
-    create_sleap_project(project_dir, sleap_paths[0])
+    create_sleap_project(project_dir, sample_sleap_path)
 
     # Read data
     data, batch_info = load_data_from_expts(sleap_paths,
@@ -123,6 +124,8 @@ def main():
 
     # Initialize and fit ARHMM
     _, _, name = fit_keypoint_ARHMM(project_dir, data, batch_info)
+
+
 
     # Fit SLDS
     fit_keypoint_SLDS(project_dir, name)
