@@ -49,8 +49,9 @@ def main():
                                             project_dir)
 
     # Update hyperparameters
-    kpm.update_config(project_dir, ar_hypparams={'nlags': this_lags})
-    print(f"Updated the config kappa to be {this_lags}") 
+    kpm.update_config(project_dir, nlags=this_lags, kappa=1e6)
+    print(f"Updated the config lags to be {this_lags} and restored kappa to 1e6.")
+    print(kpm.load_config(project_dir)) 
 
     # Create a model name that isn't just the timestamp to avoid overwrites
     name = str(datetime.now().strftime('%Y_%m_%d-%H_%M_%S')) + f"_{SLURM_ARRAY_JOB_ID}"

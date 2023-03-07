@@ -49,7 +49,7 @@ def main():
                                             project_dir)
 
     # Update hyperparameters
-    kpm.update_config(project_dir, trans_hypparams={'kappa': this_kappa})
+    kpm.update_config(project_dir, kappa=this_kappa)
     print(f"Updated the config kappa to be {this_kappa}") 
 
     # Create a model name that isn't just the timestamp to avoid overwrites
