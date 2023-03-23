@@ -101,12 +101,16 @@ def apply_model(*, params, coordinates, confidences=None,
                 mask=None, batch_info=None, ar_only=False, 
                 random_seed=0, batch_length=None, save_results=True,
                 project_dir=None, name=None, results_path=None, 
-                Y=None, conf=None, noise_prior=None, **kwargs):   
+                Y=None, conf=None, noise_prior=None, return_model_only=False, **kwargs):   
     
     
     data,new_batch_info = format_data(
         coordinates, confidences=confidences, batch_length=None, **kwargs)
     session_names = [key for key,start,end in new_batch_info]
+
+    # SR: Debug
+    print(data.keys())
+    print(session_names)
 
     if save_results:
         if results_path is None: 
@@ -159,6 +163,9 @@ def apply_model(*, params, coordinates, confidences=None,
     if save_results: 
         save_hdf5(results_path, results_dict)
         print(fill(f'Saved results to {results_path}'))
+
+    if return_model_only:
+        return model, data
         
     return results_dict
 
@@ -216,3 +223,4 @@ def update_hypparams(model_dict, **kwargs):
         f'The following hypparams were not found {not_updated}'))
         
     return model_dict
+

@@ -158,7 +158,7 @@ def load_config(project_dir, check_if_valid=True):
     the resulting dict. Optionally check if the config is valid. 
     """
     config_path = os.path.join(project_dir,'config.yml')
-    with open(config_path, 'r') as stream:  config = yaml.safe_load(stream)
+    with open(config_path, 'r') as stream:  config = yaml.safe_load(stream )
     if check_if_valid: check_config_validity(config)
     return config
 
