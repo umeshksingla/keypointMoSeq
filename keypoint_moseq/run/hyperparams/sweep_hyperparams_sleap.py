@@ -90,17 +90,17 @@ def main():
     fit_keypoint_SLDS(project_dir, name)
 
     # Load test data from test experiment folders
-    coordinates = kpm.load_keypoints_from_slp_list(test_paths)
-    confidences = None
+    # coordinates = kpm.load_keypoints_from_slp_list(test_paths)
+    # confidences = None
 
-    # Load checkpoint and config
-    checkpoint = kpm.load_checkpoint(project_dir, name)
-    config = kpm.load_config(project_dir)
+    # # Load checkpoint and config
+    # checkpoint = kpm.load_checkpoint(project_dir, name)
+    # config = kpm.load_config(project_dir)
     
     # Evaluate model on test data
-    results = kpm.apply_model(coordinates=coordinates, confidences=confidences, 
-                          project_dir=project_dir, **checkpoint, **config,
-                          plot_every_n_iters=0)
+    # results = kpm.apply_model(coordinates=coordinates, confidences=confidences, 
+    #                       project_dir=project_dir, **checkpoint, **config,
+    #                       plot_every_n_iters=0)
 
 
 if __name__ == "__main__":

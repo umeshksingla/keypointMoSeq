@@ -55,7 +55,8 @@ def find_model_name_in_project_dir(project_dir):
                 model_name = name
                 break
     if model_name is None:
-        raise ValueError("No models found in project_dir.")
+        # raise ValueError("No models found in project_dir.")
+        print(f"No models found in {project_dir}.")
     return model_name
 
 
@@ -95,9 +96,7 @@ def main():
                           plot_every_n_iters=0, use_saved_states=False,
                           pca=kpm.load_pca(project_dir))
                           
-    # Find log likelihood of test data
-    params = checkpoint["params"]
-    
+
 
 
 if __name__ == "__main__":
