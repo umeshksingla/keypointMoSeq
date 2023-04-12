@@ -8,5 +8,16 @@
 #SBATCH --mail-type=begin
 #SBATCH --mail-type=end 
 
+VIDEO_DIR="/scratch/gpfs/shruthi/pair_wt_gold"
+echo "$VIDEO_DIR"
+
+PROJECT_DIR="/scratch/gpfs/shruthi/fit_pair"
+echo "$PROJECT_DIR"
+
+USE_INSTANCE=0 # 0 for female, 1 for male
+echo "$USE_INSTANCE"
+
+PY_SCRIPT="/scratch/gpfs/shruthi/keypointMoSeq/keypoint_moseq/run/fit_kpms_to_sleap.py"
+
 source activate keypoint_moseq_sleap
-python /scratch/gpfs/shruthi/keypointMoSeq/keypoint_moseq/run/fit_kpms_to_sleap.py
+python $PY_SCRIPT --video_dir $VIDEO_DIR --project_dir $PROJECT_DIR --use_instance $USE_INSTANCE

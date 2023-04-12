@@ -3,6 +3,8 @@ Fit a keypoint-SLDS model to sleap-tracked data from wt_gold.
 """
 
 # Imports
+import argparse
+from rich.pretty import pprint
 import jax
 from jax.config import config
 config.update('jax_enable_x64', True)
@@ -11,6 +13,21 @@ import keypoint_moseq as kpm
 # Housekeeping
 print(jax.devices())
 print(jax.__version__)
+
+
+def create_cli_parser():
+    """Create a command line interface parser."""
+    parser = argparse.ArgumentParser(description='Fit a keypoint-SLDS model to sleap-tracked data from wt_gold.')
+    
+    parser.add_argument('--video_dir', type=str, default=r"D:\data\pair_wt_gold",
+                        help='Path to directory containing sleap-tracked data.')
+    
+    parser.add_argument('--project_dir', type=str, default=r"D:\data\pair_wt_gold\fitting",
+                        help='Path to directory where model will be saved.')
+    
+    parser.add_argument('--use_instance', type=int, default=1)
+    
+    return parser
 
 
 def find_sleap_paths(video_dir):
@@ -41,13 +58,13 @@ def create_sleap_project(project_dir, sample_sleap_path, use_bodyparts=None,
     print(f"Initialized {project_dir} with config.")
     print(config())
 
-def load_data_from_expts(sleap_paths, project_dir):
+def load_data_from_expts(sleap_paths, project_dir, use_instance):
     """
     Load keypoint tracked data from sleap_paths using config info from project_dir.
     Format data for modelling and move to GPU.
     """
     config = kpm.load_config(project_dir)
-    coordinates = kpm.load_keypoints_from_slp_list(sleap_paths)
+    coordinates = kpm.load_keypoints_from_slp_list(sleap_paths, use_instance)
     print("Printing summary of data loaded.")
     for k,v in coordinates.items():
         print(f"Session {k}")
@@ -100,16 +117,19 @@ def fit_keypoint_SLDS(project_dir, name):
 
 
 def main():
-    # Main control flow of the experiment
-    della = True
-    hyperparams_csv = None # Define settings of parameters for model fitting
-    if della:
-        video_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/" 
-        project_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/fitting"
-    else:
-        video_dir = r"D:\data\pair_wt_gold"
-        project_dir = r"D:\data\pair_wt_gold\fitting"
-    
+
+    # Parse arguments
+    parser = create_cli_parser()
+    args = parser.parse_args()
+    print("Args:")
+    pprint(vars(args))
+    print()
+
+    # Read arguments
+    video_dir = args.video_dir
+    project_dir = args.project_dir
+    use_instance = args.use_instance
+
     # Setup project
     sleap_paths = find_sleap_paths(video_dir)
     sample_sleap_path = sleap_paths[0]
@@ -117,7 +137,8 @@ def main():
 
     # Read data
     data, batch_info = load_data_from_expts(sleap_paths,
-                                            project_dir)
+                                            project_dir,
+                                            use_instance)
 
     # Fit PCA
     run_fit_PCA(data, project_dir)

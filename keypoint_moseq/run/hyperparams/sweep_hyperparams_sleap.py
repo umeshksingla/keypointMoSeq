@@ -38,6 +38,7 @@ def create_cli_parser():
         required=True,
         help="Path to video directory containing sleap experiments.",
     )
+    parser.add_argument('--use_instance', type=int, default=1)
 
     return parser
 
@@ -69,6 +70,7 @@ def main():
     print()
     video_dir = args.video_dir
     project_dir = args.project_dir
+    use_instance = args.use_instance
 
     # Get sleap experiment folders 
     sleap_paths = find_sleap_paths(video_dir)
@@ -78,7 +80,8 @@ def main():
 
     # Load train data from train experiment folders
     data, batch_info = load_data_from_expts(train_paths,
-                                            project_dir)
+                                            project_dir,
+                                            use_instance)
 
     # Fit PCA
     run_fit_PCA(data, project_dir)
