@@ -5,12 +5,13 @@ If the model_name is not specified then it identifies the (first) model_name/che
 It performs inference with the model on data from sleap experiments in the video_dir.
 
 """
-import os
-import numpy as np
-import keypoint_moseq as kpm
-from keypoint_moseq.run.fit_kpms_to_sleap import find_sleap_paths, load_data_from_expts, run_fit_PCA, fit_keypoint_ARHMM, fit_keypoint_SLDS
 import argparse
+import os
+
 from rich.pretty import pprint
+
+import keypoint_moseq as kpm
+from keypoint_moseq.run.fit_kpms_to_sleap import find_sleap_paths
 
 
 def create_cli_parser():
@@ -40,6 +41,7 @@ def create_cli_parser():
         default=None,
         help="Path to directory with project_dir containing trained model",
     )
+    parser.add_argument('--use_instance', type=int, default=1)
 
     return parser
 
@@ -72,12 +74,14 @@ def main():
     video_dir = args.video_dir
     project_dir = args.project_dir
     model_name = args.model_name
+    use_instance = args.use_instance
 
     # Get sleap experiment folders 
     test_paths = find_sleap_paths(video_dir)
 
     # Load test data from test experiment folders
-    coordinates = kpm.load_keypoints_from_slp_list(test_paths)
+    coordinates = kpm.load_keypoints_from_slp_list(test_paths,
+                                                   use_instance=use_instance)
     confidences = None
 
     if model_name is None:

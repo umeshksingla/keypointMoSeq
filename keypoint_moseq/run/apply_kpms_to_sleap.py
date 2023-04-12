@@ -10,6 +10,8 @@ input data.
 
 # Imports
 import jax
+import argparse
+from rich.pretty import pprint
 from jax.config import config
 config.update('jax_enable_x64', True)
 import keypoint_moseq as kpm
@@ -17,6 +19,22 @@ import keypoint_moseq as kpm
 # Housekeeping
 print(jax.devices())
 print(jax.__version__)
+
+
+def create_cli_parser():
+    """Create a command line interface parser."""
+    parser = argparse.ArgumentParser(description='Fit a keypoint-SLDS model to sleap-tracked data from wt_gold.')
+    
+    parser.add_argument('--video_dir', type=str, default=r"D:\data\pair_wt_gold",
+                        help='Path to directory containing sleap-tracked data.')
+    
+    parser.add_argument('--project_dir', type=str, default=r"D:\data\pair_wt_gold\fitting",
+                        help='Path to directory where model will be saved.')
+    parser.add_argument('--model_name', type=str, default=None,
+                        help='Name of model folder within project_dir.')
+    parser.add_argument('--use_instance', type=int, default=1)
+    
+    return parser
 
 
 def find_sleap_paths(video_dir):
@@ -28,12 +46,13 @@ def find_sleap_paths(video_dir):
     return sleap_paths
 
 
-def load_coords_from_expts(sleap_paths, project_dir):
+def load_coords_from_expts(sleap_paths, project_dir, use_instance):
     """
     Load keypoint tracked data from sleap_paths using config info from project_dir.
     """
     config = kpm.load_config(project_dir)
-    coordinates = kpm.load_keypoints_from_slp_list(sleap_paths)
+    coordinates = kpm.load_keypoints_from_slp_list(sleap_paths,
+                                                   use_instance)
     print("Printing summary of data loaded.")
     for k,v in coordinates.items():
         print(f"Session {k}")
@@ -52,23 +71,26 @@ def apply_kpms_model(coordinates, project_dir, name):
 
 
 def main():
-    # Main control flow of the experiment
-    della = True
-    if della:
-        project_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/fitting"
-        name = "2023_01_12-20_28_34"
-        video_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/"
-        # video_dir = r"/scratch/gpfs/shruthi/pair_wt_gold/190612_110953_wt_18159203_rig3.1"
-    else:
-        video_dir = r"D:\data\pair_wt_gold"
-        project_dir = r"D:\data\pair_wt_gold\fitting"
+    # Parse arguments
+    parser = create_cli_parser()
+    args = parser.parse_args()
+    print("Args:")
+    pprint(vars(args))
+    print()
+
+    # Read arguments
+    video_dir = args.video_dir
+    project_dir = args.project_dir
+    name = args.model_name
+    use_instance = args.use_instance
     
     # Setup project
     sleap_paths = find_sleap_paths(video_dir)
 
     # Read data
     coordinates = load_coords_from_expts(sleap_paths,
-                                            project_dir)
+                                            project_dir,
+                                            use_instance)
 
     # Apply model
     apply_kpms_model(coordinates, project_dir, name)
