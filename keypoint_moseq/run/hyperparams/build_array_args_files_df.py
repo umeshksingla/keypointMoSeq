@@ -44,13 +44,19 @@ def get_model_name(row):
 def read_model_llh(row):
     name = find_model_name_in_project_dir(row)
     llh_file = os.path.join(row, name, 'llh.p')
-    llh = joblib.load(llh_file)
+    try:
+        llh = joblib.load(llh_file)
+    except FileNotFoundError:
+        return None
     return llh['Y']
 
 
 
 def get_syllables(results_path):
-    results = kpm.load_hdf5(results_path)
+    try:
+        results = kpm.load_hdf5(results_path)
+    except FileNotFoundError:
+        return None
     key = list(results.keys())[0]
     print(key)
     return np.copy(results[key]['syllables'])
@@ -95,11 +101,12 @@ def make_duration_plots(syll_arr):
 
 def compute_median_syllable_duration(row):
     results_path = row['results_path']
-    # hyp_param = row['val_hypparam']
     syllables = get_syllables(results_path)
-    durations = get_durations(syllables)
-    # make_duration_plots(syllables)
-    return np.median(durations)
+    if syllables is not None:
+        durations = get_durations(syllables)
+        return np.median(durations)
+    else:
+        return None
 
 
 
@@ -121,7 +128,7 @@ def read_paths_to_models(args_path):
 
 
 def save_hyp_df(hyp_df, args_path):
-    save_path = os.path.join(os.path.dirname(args_path), 'hyperparameter_sweep_stats.csv')
+    save_path = os.path.join(os.path.dirname(args_path), f'hypparam{HYPPARAM}_sweep_stats.csv')
     hyp_df.to_csv(save_path, index=False)
     print(f'Saved hyperparameter sweep stats to {save_path}')
 
