@@ -20,9 +20,12 @@ CONFIG_MAP_LIST = {"kappa": ["trans_hypparams", "kappa"],
                   } 
 
 
+test_data_folder = "/scratch/gpfs/shruthi/pair_wt_gold/190612_110405_wt_16276625_rig2.1/"
+test_data_file = kpm.project.get_sleap_paths(test_data_folder)
+coordinates = kpm.load_keypoints_from_slp_list(test_data_file)
+
 def getFromDict(dataDict, mapList): # Usage: getFromDict(config, CONFIG_MAP_LIST['kappa'])
     return reduce(operator.getitem, mapList, dataDict)
-
 
 
 
@@ -133,6 +136,25 @@ def save_hyp_df(hyp_df, args_path):
     print(f'Saved hyperparameter sweep stats to {save_path}')
 
 
+
+def make_movies(row):
+    project_dir = row['Path']
+    results_path = row['results_path']
+    name = find_model_name_in_project_dir(project_dir)
+
+    kpm.update_config(project_dir, video_dir='/tigress/MMURTHY/junyu/data/pair')
+    config = kpm.load_config(project_dir)
+    kpm.generate_crowd_movies(project_dir=project_dir, results_path=results_path, **config, 
+                                sleap=True, name=name)
+
+
+
+def generate_trajectory_plots(row):
+    config = kpm.load_config(row['Path'])
+    kpm.generate_trajectory_plots(coordinates, results_path=row['results_path'],
+                                  **config, output_dir=os.path.dirname(row['results_path']))
+
+
 def main():
     parser = create_cli_parser()
     args = parser.parse_args()
@@ -145,8 +167,11 @@ def main():
     hyp_df['model_path'] = hyp_df['Path'].apply(get_model_name)
     hyp_df['llh'] = hyp_df['Path'].apply(read_model_llh)
     hyp_df['results_path'] = hyp_df['model_path'].apply(lambda row: os.path.join(row, 'results.h5'))
-
     hyp_df['median_duration'] = hyp_df.apply(compute_median_syllable_duration, axis=1)
+
+
+    hyp_df.apply(make_movies, axis=1)
+    hyp_df.apply(generate_trajectory_plots, axis=1)
     save_hyp_df(hyp_df, args_path)
     
 
