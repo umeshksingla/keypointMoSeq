@@ -12,7 +12,7 @@ from rich.pretty import pprint
 
 import keypoint_moseq as kpm
 from keypoint_moseq.run.fit_kpms_to_sleap import find_sleap_paths
-
+from keypoint_moseq.run.hyperparams.get_test_probs import get_model_llh
 
 def create_cli_parser():
     """Create an argument parser for the command line interface."""
@@ -95,11 +95,13 @@ def main():
     config = kpm.load_config(project_dir)
     
     # Evaluate model on test data
-    results = kpm.apply_model(coordinates=coordinates, confidences=confidences, 
+    kpm.apply_model(coordinates=coordinates, confidences=confidences, 
                           project_dir=project_dir, **checkpoint, **config,
                           plot_every_n_iters=0, use_saved_states=False,
                           pca=kpm.load_pca(project_dir))
-                          
+
+    llh = get_model_llh(project_dir, coordinates)
+    print(llh)
 
 
 

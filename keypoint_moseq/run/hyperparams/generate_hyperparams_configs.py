@@ -21,8 +21,8 @@ from rich.pretty import pprint
 
 
 # Define hyperparam sweep configuration
-hyper = {"nlags": [1, 3, 5, 10],
-        "alpha": [0.1, 0.5, 1, 5, 10, 50],}
+hyper = {"nlags": [2, 3, 4, 5, 6, 7, 8, 9, 10],
+        }
 
 # hyper = {"latent_dimension": list(np.arange(2, 22, 2, dtype=int))}
 

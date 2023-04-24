@@ -22,5 +22,6 @@ project_dir=$(sed -n "$linenum p" $array_args_file)
 
 echo "$project_dir"
 
+module load cudnn/cuda-11.x/8.2.0
 source activate keypoint_moseq_sleap
 python "$PY_SCRIPT" -p "$project_dir" -v "$video_dir"

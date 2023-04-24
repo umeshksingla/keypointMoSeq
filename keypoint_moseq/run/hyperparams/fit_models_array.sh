@@ -7,8 +7,8 @@
 #SBATCH --mail-type=begin
 #SBATCH --mail-type=end 
 
-# PY_SCRIPT="/scratch/gpfs/shruthi/keypointMoSeq/keypoint_moseq/run/hyperparams/fit_to_test_hyperparams.py"
-PY_SCRIPT="/scratch/gpfs/shruthi/keypointMoSeq/keypoint_moseq/run/hyperparams/get_test_probs.py"
+PY_SCRIPT="/scratch/gpfs/shruthi/keypointMoSeq/keypoint_moseq/run/hyperparams/fit_to_test_hyperparams.py"
+# PY_SCRIPT="/scratch/gpfs/shruthi/keypointMoSeq/keypoint_moseq/run/hyperparams/get_test_probs.py"
 echo "$PY_SCRIPT"
 
 array_args_file="$1"
