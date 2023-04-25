@@ -88,20 +88,22 @@ def main():
         # Find model_name in project_dir
         model_name = find_model_name_in_project_dir(project_dir)
         name = model_name
+
+    if model_name is not None:
         print("Doing inference with model_name: {}".format(model_name))
 
-    # Load checkpoint and config
-    checkpoint = kpm.load_checkpoint(project_dir, name)
-    config = kpm.load_config(project_dir)
-    
-    # Evaluate model on test data
-    kpm.apply_model(coordinates=coordinates, confidences=confidences, 
-                          project_dir=project_dir, **checkpoint, **config,
-                          plot_every_n_iters=0, use_saved_states=False,
-                          pca=kpm.load_pca(project_dir))
+        # Load checkpoint and config
+        checkpoint = kpm.load_checkpoint(project_dir, name)
+        config = kpm.load_config(project_dir)
+        
+        # Evaluate model on test data
+        kpm.apply_model(coordinates=coordinates, confidences=confidences, 
+                            project_dir=project_dir, **checkpoint, **config,
+                            plot_every_n_iters=0, use_saved_states=False,
+                            pca=kpm.load_pca(project_dir))
 
-    llh = get_model_llh(project_dir, coordinates)
-    print(llh)
+        llh = get_model_llh(project_dir, coordinates)
+        print(llh)
 
 
 
