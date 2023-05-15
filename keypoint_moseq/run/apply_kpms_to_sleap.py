@@ -10,6 +10,7 @@ input data.
 
 # Imports
 import jax
+import os
 import argparse
 from rich.pretty import pprint
 from jax.config import config
@@ -70,6 +71,23 @@ def apply_kpms_model(coordinates, project_dir, name):
                           plot_every_n_iters=0)
 
 
+def find_model_name_in_project_dir(project_dir):
+    """Find the model_name in the project_dir.
+    """
+    # Find model_name in project_dir
+    model_name = None
+    for name in os.listdir(project_dir):
+        if os.path.isdir(os.path.join(project_dir, name)):
+            if os.path.exists(os.path.join(project_dir, name, "checkpoint.p")):
+                model_name = name
+                break
+    if model_name is None:
+        # raise ValueError("No models found in project_dir.")
+        print(f"No models found in {project_dir}.")
+    return model_name
+
+
+
 def main():
     # Parse arguments
     parser = create_cli_parser()
@@ -91,6 +109,8 @@ def main():
     coordinates = load_coords_from_expts(sleap_paths,
                                             project_dir,
                                             use_instance)
+    if name is None:
+        name = find_model_name_in_project_dir(project_dir)
 
     # Apply model
     apply_kpms_model(coordinates, project_dir, name)

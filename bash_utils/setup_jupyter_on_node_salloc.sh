@@ -2,6 +2,7 @@
 
 export XDG_RUNTIME_DIR=""
 
+#module load cudnn/cuda-11.x/8.2.0
 source activate keypoint_moseq_sleap
 
 # get tunneling info

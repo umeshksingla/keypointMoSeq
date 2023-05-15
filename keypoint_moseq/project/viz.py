@@ -220,7 +220,7 @@ def generate_crowd_movies(
     pre=30, post=60, min_usage=0.005, min_duration=3, dot_radius=4, 
     dot_color=(255,255,255), window_size=112, plot_keypoints=False, 
     use_reindexed=True, sampling_options={}, coordinates=None, 
-    bodyparts=None, use_bodyparts=None, quality=7, sleap=False, **kwargs):
+    bodyparts=None, use_bodyparts=None, fps=None, quality=7, sleap=False, **kwargs):
     
     assert video_dir is not None, fill(
         'The ``video_dir`` argument is required')
@@ -246,7 +246,9 @@ def generate_crowd_movies(
     else:
         video_paths = find_matching_videos(results.keys(), video_dir, as_dict=True)
     videos = {k: OpenCVReader(path) for k,path in video_paths.items()}
-    fps = list(videos.values())[0].fps
+    if fps is None:
+        fps = list(videos.values())[0].fps
+    print(f"Rendering at {fps} fps")
     
     syllable_key = 'syllables' + ('_reindexed' if use_reindexed else '')
     syllables = {k:v[syllable_key] for k,v in results.items()}
