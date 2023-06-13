@@ -100,8 +100,6 @@ def compute_wing_angles(x, left_ind=3, right_ind=4):
     return thetaL, thetaR
 
 
-
-
 def connected_components1d(x, return_limits=False):
     """
     Return the indices of the connected components in a 1D logical array.
@@ -209,7 +207,6 @@ def load_song(expt_folder, return_audio=False):
         return pslow, pfast, sine, pulse_bouts, sine_bouts, mix_bouts, song
     else:
         return pslow, pfast, sine, pulse_bouts, sine_bouts, mix_bouts
-
 
 
 def h5read(filename, dataset):
@@ -605,9 +602,11 @@ def load_joint_ts(path_to_proc, joint_names=None, df_name="egoM"):
     else:
         return data, node_names
     
-    
-    
+
+
+
 def get_song_frames(expt_folder):
+    
     # Get sync
     sample_at_frame, frame_at_sample = get_expt_sync(expt_folder)
 

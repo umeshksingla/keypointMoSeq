@@ -14,8 +14,7 @@ import os
 
 import jax
 from jax.config import config
-config.update('jax_enable_x64', False) # Switch to single-precision to handle memory issues
-
+config.update('jax_enable_x64', True) # Switch to single-precision to handle memory issues
 
 
 # Housekeeping
@@ -78,6 +77,13 @@ def resume_fitting_to_new_data(checkpoint_path,
     pca = kpm.load_pca(project_dir)
     use_instance = config["use_instance"]
 
+    # Hack here to resume fitting when jobs crashed at i = 20
+    # sleap_paths = sleap_paths[20:]
+    # print(f"Hack here to resume fitting from batch starting at idx = 20. \n")
+    # print(f"The paths: {sleap_paths} \n")
+
+    log_liks = dict()
+
     # Split sleap_paths into batches of length expt_batch_length
     for i in range(0, len(sleap_paths), expt_batch_length):
         
@@ -101,7 +107,7 @@ def resume_fitting_to_new_data(checkpoint_path,
                                      **config)
         
         # Resume fitting with new data
-        _, _, name = kpm.fit_model(model, data, batch_info, ar_only=False, 
+        model, history, name = kpm.fit_model(model, data, batch_info, ar_only=False, 
                         num_iters=100, project_dir=project_dir, 
                         plot_every_n_iters=0,)
 
@@ -124,10 +130,9 @@ def main():
     resume_fitting = args.resume_fitting
     checkpoint_path = args.checkpoint_path
 
-    # TODO: pass hyperparameters as a dictionary from CL
-    hyper = HYPER
-    print(f"Hyperparameters for this run: ")
-    pprint(hyper)
+    # Load config from project_dir and print
+    config = kpm.load_config(project_dir)
+    pprint(config)
 
     # Find expt. paths to fit model to
     sleap_paths = find_sleap_paths(video_dir)

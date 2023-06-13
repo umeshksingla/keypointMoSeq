@@ -433,3 +433,5 @@ def generate_trajectory_plots(
         plt.show()
             
     else: raise NotImplementedError()
+
+    return syllable_instances, trajectories, Xs, lims

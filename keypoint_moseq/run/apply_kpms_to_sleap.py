@@ -9,15 +9,16 @@ input data.
 """
 
 # Imports
-import jax
 import os
 import argparse
 from rich.pretty import pprint
-from jax.config import config
-config.update('jax_enable_x64', True)
+
 import keypoint_moseq as kpm
 
 # Housekeeping
+import jax
+from jax.config import config
+config.update('jax_enable_x64', False)
 print(jax.devices())
 print(jax.__version__)
 
@@ -67,8 +68,9 @@ def apply_kpms_model(coordinates, project_dir, name):
     config = kpm.load_config(project_dir)
     confidences = None
     results = kpm.apply_model(coordinates=coordinates, confidences=confidences, 
-                          project_dir=project_dir, **checkpoint, **config,
-                          plot_every_n_iters=0)
+                            project_dir=project_dir, **checkpoint, **config,
+                            plot_every_n_iters=0, use_saved_states=False,
+                            pca=kpm.load_pca(project_dir))
 
 
 def find_model_name_in_project_dir(project_dir):
