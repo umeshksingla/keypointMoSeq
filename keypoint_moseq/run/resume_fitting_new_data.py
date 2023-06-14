@@ -8,8 +8,7 @@ from rich.pretty import pprint
 
 import keypoint_moseq as kpm
 from keypoint_moseq.run.fit_kpms_to_sleap import find_sleap_paths, load_data_from_expts
-from pathlib import Path
-from datetime import datetime
+from jax_moseq.models.keypoint_slds import model_likelihood
 import os
 
 import jax
@@ -82,7 +81,8 @@ def resume_fitting_to_new_data(checkpoint_path,
     # print(f"Hack here to resume fitting from batch starting at idx = 20. \n")
     # print(f"The paths: {sleap_paths} \n")
 
-    log_liks = dict()
+    log_Y_and_model = []
+    log_Y_given_model = []
 
     # Split sleap_paths into batches of length expt_batch_length
     for i in range(0, len(sleap_paths), expt_batch_length):
@@ -110,6 +110,17 @@ def resume_fitting_to_new_data(checkpoint_path,
         model, history, name = kpm.fit_model(model, data, batch_info, ar_only=False, 
                         num_iters=100, project_dir=project_dir, 
                         plot_every_n_iters=0,)
+
+        # Compute log likelihoods
+        data = model['data']
+        states = model['states']
+        params = model['params']
+        hypparams = model['hypparams']
+        noise_prior = model['noise_prior']
+        ll = model_likelihood(data, states, params, hypparams, noise_prior)
+
+        log_Y_and_model.append(sum([v.item() for v in ll.values()]))
+        log_Y_given_model.append(ll['Y'].item())
 
 
 
