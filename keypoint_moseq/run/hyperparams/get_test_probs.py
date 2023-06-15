@@ -17,11 +17,12 @@ and
 
 from jax_moseq.models import keypoint_slds
 import keypoint_moseq as kpm
-from keypoint_moseq.run.fit_kpms_to_sleap import find_sleap_paths
+from keypoint_moseq.project.fit_utils import find_sleap_paths, get_ll
 import os
 import argparse
 from rich.pretty import pprint
 import joblib
+
 
 def create_cli_parser():
     """Create an argument parser for the command line interface."""
@@ -41,6 +42,14 @@ def create_cli_parser():
     type=str,
     required=True,
     help="Path to video directory containing data for which to compute model log likelihood.",
+    )
+
+    parser.add_argument(
+    "-m",
+    "--model_name",
+    type=str,
+    required=True,
+    help="model_name",
     )
 
     return parser
@@ -65,52 +74,30 @@ def find_checkpoint(project_dir):
     return None
 
 
+def get_test_probs(test_paths, project_dir, model_name):
 
-def get_model_llh(project_dir, coordinates, confidences=None):
-    """
-    Unpack the model parameters from the checkpoint_paths
-    and compute the log likelihood of the data
+    # Load checkpoint
+    checkpoint = kpm.load_checkpoint(project_dir, model_name)
 
-    Parameters
-    ----------
-    checkpoint_paths : list
-        A list of paths to checkpoint.p files
-    coordinates: dict
-
-    confidences: None
-
-    """
-    # Load config
+    # Load checkpoint and config
     config = kpm.load_config(project_dir)
-    
-    # Find checkpoint
-    checkpoint_path = find_checkpoint(project_dir)
-    if checkpoint_path is not None:
-        checkpoint = kpm.load_checkpoint(path=checkpoint_path)
-    else:
-        print(f"Checkpoint doesn't exist in {project_dir}")
-        return
-    
-    # Resample model with test data
-    model, data = kpm.apply_model(coordinates=coordinates, confidences=confidences, 
+    pca = kpm.load_pca(project_dir)
+    coordinates = kpm.load_keypoints_from_slp_list(test_paths)
+    confidences = None
+
+    # Evaluate model on test data
+    model, data = kpm.apply_model(coordinates=coordinates, confidences=confidences,
                         project_dir=project_dir, **checkpoint, **config,
                         plot_every_n_iters=0, use_saved_states=False,
-                        pca=kpm.load_pca(project_dir),
-                        num_iters=1,
-                        return_model_only=True)
+                        num_iters=1, pca=pca)
 
-    # Compute model log likelihood
-    llh = keypoint_slds.model_likelihood(data, **model)
-
-    # Save LLHs to the same folder that contains the checkpoint
-    dirname = os.path.dirname(checkpoint_path)
-    save_path = os.path.join(dirname, 'llh.p')
-    joblib.dump(llh, save_path)
-
-    return llh
+    # Compute log likelihoods
+    log_Y_and_model, log_Y_given_model = get_ll(model, data)
+    return log_Y_and_model, log_Y_given_model
 
 
 if __name__ == "__main__":
+
     parser = create_cli_parser()
     args = parser.parse_args()
     print("Args:")
@@ -118,15 +105,14 @@ if __name__ == "__main__":
 
     project_dir = args.project_dir
     video_dir = args.video_dir
+    model_name = args.model_name
 
     # Load test data from test experiment folders
     test_paths = find_sleap_paths(video_dir)
-    # Load test data from test experiment folders
-    coordinates = kpm.load_keypoints_from_slp_list(test_paths)
-    confidences = None
 
-    llh = get_model_llh(project_dir, coordinates)
-    print(llh)
+    llh1, llh2 = get_test_probs(test_paths, project_dir, checkpoint)
+
+    print(llh1, ll2)
 
 
     

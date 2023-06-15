@@ -101,7 +101,7 @@ def apply_model(*, params, coordinates, confidences=None,
                 mask=None, batch_info=None, ar_only=False, 
                 random_seed=0, batch_length=None, save_results=True,
                 project_dir=None, name=None, results_path=None, 
-                Y=None, conf=None, noise_prior=None, return_model_only=False, **kwargs):   
+                Y=None, conf=None, noise_prior=None, return_model_only=False, **kwargs):
     
     
     data,new_batch_info = format_data(
@@ -130,7 +130,8 @@ def apply_model(*, params, coordinates, confidences=None,
                 unbatch(v, mask, batch_info), 
                 keys=session_names)[0]
         states = new_states
-    else: states = None
+    else:
+        states = None
     
     model = initialize_model(
         states=states, params=params, 
@@ -158,7 +159,7 @@ def apply_model(*, params, coordinates, confidences=None,
             'latent_state' : states['x'][i][m>0],
             'centroid' : states['v'][i][m>0],
             'heading' : states['h'][i][m>0],
-        } for i,(m,session_name) in enumerate(zip(mask,session_names))}
+        } for i,(m,session_name) in enumerate(zip(mask, session_names))}
     
     if save_results: 
         save_hdf5(results_path, results_dict)
