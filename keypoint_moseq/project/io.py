@@ -311,6 +311,21 @@ def format_data(coordinates, *, confidences=None, keys=None,
     return jax.device_put({'mask':mask, 'Y':Y}), batch_info
 
 
+def save_llh(llh, project_dir, llh_path=None):
+    llh['train'] = {k: np.array(llh['train'][k]) for k in llh['train']}
+    llh['test'] = {k: np.array(llh['test'][k]) for k in llh['test']}
+    if llh_path is None:
+        llh_path = os.path.join(project_dir, 'llh.p')
+    joblib.dump(llh, llh_path)
+
+
+def load_llh(project_dir, llh_path=None):
+    if llh_path is None:
+        llh_path = os.path.join(project_dir, 'llh.p')
+        assert os.path.exists(llh_path), fill(f'No LLh file found at {llh_path}')
+    return joblib.load(llh_path)
+
+
 def save_pca(pca, project_dir, pca_path=None):
     if pca_path is None: 
         pca_path = os.path.join(project_dir,'pca.p')
@@ -376,7 +391,7 @@ def save_checkpoint(model, data, history, batch_info, iteration,
         
     if save_states or save_data: 
         save_dict['mask'] = np.array(data['mask'])
-        
+
     if save_states: 
         save_dict['states'] = jax.device_get(model['states'])
         save_dict['noise_prior'] = jax.device_get(model['noise_prior'])

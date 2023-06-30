@@ -141,4 +141,4 @@ if __name__ == "__main__":
                                                 hyper,
                                                 use_bodyparts)
 
-    model_name = train(sleap_paths, project_dir, use_instance)
+    model_name, llh = train(sleap_paths, project_dir, use_instance)

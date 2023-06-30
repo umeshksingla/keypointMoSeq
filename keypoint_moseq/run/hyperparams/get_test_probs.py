@@ -74,7 +74,7 @@ def find_checkpoint(project_dir):
     return None
 
 
-def get_test_probs(test_paths, project_dir, model_name):
+def get_test_probs(test_paths, project_dir, model_name, use_instance):
 
     # Load checkpoint
     checkpoint = kpm.load_checkpoint(project_dir, model_name)
@@ -82,11 +82,11 @@ def get_test_probs(test_paths, project_dir, model_name):
     # Load checkpoint and config
     config = kpm.load_config(project_dir)
     pca = kpm.load_pca(project_dir)
-    coordinates = kpm.load_keypoints_from_slp_list(test_paths)
+    coordinates = kpm.load_keypoints_from_slp_list(test_paths, use_instance)
     confidences = None
 
     # Evaluate model on test data
-    model, data = kpm.apply_model(coordinates=coordinates, confidences=confidences,
+    _, model, data = kpm.apply_model(coordinates=coordinates, confidences=confidences,
                         project_dir=project_dir, **checkpoint, **config,
                         plot_every_n_iters=0, use_saved_states=False,
                         num_iters=1, pca=pca)
@@ -109,6 +109,7 @@ if __name__ == "__main__":
 
     # Load test data from test experiment folders
     test_paths = find_sleap_paths(video_dir)
+    test_paths = []
 
     llh1, llh2 = get_test_probs(test_paths, project_dir, checkpoint)
 

@@ -1,3 +1,4 @@
+import os
 """
 This script receives as input a project_dir that contains a specific config.yml file.
 It initializes a model with the parameters specified in the config.yml file.
@@ -15,8 +16,9 @@ a list of project_dirs.
 
 import numpy as np
 from keypoint_moseq.project.fit_utils import find_sleap_paths, load_data_from_expts, run_fit_PCA, fit_keypoint_ARHMM, \
-    resume_slds_fitting_to_new_data
+    resume_slds_fitting_to_new_data, fit_mvn, print_ll, calculate_test_bits, calculate_train_bits
 from keypoint_moseq.run.hyperparams.get_test_probs import get_test_probs
+from keypoint_moseq.project.io import save_llh, load_llh
 
 import argparse
 from rich.pretty import pprint
@@ -48,13 +50,12 @@ def create_cli_parser():
 
 
 def sample_paths_for_initialization(sleap_paths):
-    # TODO: sample randomly
+    # TODO (US): sample randomly
     init_paths = sleap_paths[:5]
     return init_paths
 
 
 def train(train_paths, project_dir, use_instance):
-    # TODO (US): return logll of training iters
 
     init_paths = sample_paths_for_initialization(train_paths)
 
@@ -65,12 +66,13 @@ def train(train_paths, project_dir, use_instance):
     run_fit_PCA(data, project_dir)
 
     # Initialize and fit ARHMM
-    _, _, checkpoint_path = fit_keypoint_ARHMM(project_dir, data, batch_info)
+    _, _, name = fit_keypoint_ARHMM(project_dir, data, batch_info)
 
     # Fit SLDS
-    resume_slds_fitting_to_new_data(checkpoint_path, project_dir, train_paths)
+    checkpoint_path = os.path.join(project_dir, name, 'checkpoint.p')
+    name, llh = resume_slds_fitting_to_new_data(checkpoint_path, project_dir, train_paths)
 
-    return checkpoint_path
+    return name, llh
 
 
 def fitCV(sleap_paths, project_dir, use_instance):
@@ -87,29 +89,44 @@ def fitCV(sleap_paths, project_dir, use_instance):
     """
     sleap_paths = np.array(sleap_paths)
 
-    log_joint = []
-    log_y_given_model = []
+    llh = {
+        'train': {'log_Y_and_model': [], 'log_Y_given_model': [], 'log_Y_given_mvn': [], 'n_samples': []},
+        'test': {'log_Y_and_model': [], 'log_Y_given_model': [], 'log_Y_given_mvn': [], 'n_samples': []},
+    }
+
+    if len(sleap_paths) <= 1:
+        model_name, train_llh = train(sleap_paths, project_dir, use_instance)
+        print("model_name", model_name)
+        llh['train']['log_Y_and_model'].append(train_llh['log_Y_and_model'])
+        llh['train']['log_Y_given_model'].append(train_llh['log_Y_given_model'])
+        return llh
 
     kfold = KFold(n_splits=np.min([5, len(sleap_paths)]))
     for tr, te in kfold.split(sleap_paths):
-        print("tr", tr, "te", te)
+        print(">>> tr", tr, "te", te)
         train_paths, test_paths = sleap_paths[tr], sleap_paths[te]
-        print("train_paths", train_paths)
-        print("test_paths", test_paths)
 
-        model_name = train(train_paths, project_dir, use_instance)
-        log_y_and_model, log_ll = get_test_probs(test_paths, project_dir, model_name)
-        log_joint.append(log_y_and_model)
-        log_y_given_model.append(log_ll)
+        model_name, train_llh = train(train_paths, project_dir, use_instance)
+        train_log_Y_given_mvn, n_samples = fit_mvn(train_paths, project_dir, use_instance)
+        print("model_name:", model_name)
+        print(train_llh)
+        llh['train']['log_Y_and_model'].append(train_llh['log_Y_and_model'])
+        llh['train']['log_Y_given_model'].append(train_llh['log_Y_given_model'])
+        llh['train']['log_Y_given_mvn'].append(train_log_Y_given_mvn)
+        llh['train']['n_samples'].append(n_samples)
 
-        print("LLs for tr:", tr, "te:", te, "log y,model", log_y_given_model, "log y|model", log_y_given_model)
+        test_log_y_and_model, test_log_ll = get_test_probs(test_paths, project_dir, model_name, use_instance)
+        test_log_Y_given_mvn, n_samples = fit_mvn(test_paths, project_dir, use_instance)
+        llh['test']['log_Y_and_model'].append([test_log_y_and_model])
+        llh['test']['log_Y_given_model'].append([test_log_ll])
+        llh['test']['log_Y_given_mvn'].append(test_log_Y_given_mvn)
+        llh['test']['n_samples'].append(n_samples)
 
-    return log_joint, log_y_given_model
+        print(f"Test LLs for split: (tr={tr}, te={te}): "
+              f"\tlog(y,model)=", test_log_y_and_model, "\tlog(y|model)=", test_log_ll)
 
-
-def plot_ll(log_joint, log_data_ll):
-    print("log_joint", log_joint)
-    print("log_data_ll", log_data_ll)
+    print("llh", llh)
+    save_llh(llh, project_dir)
     return
 
 
@@ -129,8 +146,16 @@ def main():
     sleap_paths = find_sleap_paths(video_dir)
     print("sleap_paths", sleap_paths)
     sleap_paths = np.array(sleap_paths)
-    log_joint, log_data_ll = fitCV(sleap_paths, project_dir, use_instance)
-    plot_ll(log_joint, log_data_ll)
+
+    # Do cross validation
+    fitCV(sleap_paths, project_dir, use_instance)
+
+    # Plot training and test loglikelihoods
+    llh = load_llh(project_dir)
+    print_ll(llh)
+    calculate_train_bits(llh['train'])
+    calculate_test_bits(llh['test'])
+    return
 
 
 if __name__ == "__main__":

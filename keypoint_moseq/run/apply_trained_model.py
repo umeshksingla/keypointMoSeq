@@ -45,10 +45,10 @@ def apply_kpms_model(coordinates, project_dir, name):
     checkpoint = kpm.load_checkpoint(project_dir, name)
     config = kpm.load_config(project_dir)
     confidences = None
-    results = kpm.apply_model(coordinates=coordinates, confidences=confidences, 
-                            project_dir=project_dir, **checkpoint, **config,
-                            plot_every_n_iters=0, use_saved_states=False,
-                            pca=kpm.load_pca(project_dir))
+    kpm.apply_model(coordinates=coordinates, confidences=confidences,
+                    project_dir=project_dir, **checkpoint, **config,
+                    plot_every_n_iters=0, use_saved_states=False,
+                    pca=kpm.load_pca(project_dir))
 
 
 if __name__ == "__main__":

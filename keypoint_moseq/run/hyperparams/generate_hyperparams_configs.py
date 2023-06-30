@@ -20,7 +20,7 @@ import argparse
 from rich.pretty import pprint
 
 # Define hyperparam sweep configuration
-hyper = {"nlags": [3, 10], }
+hyper = {"nlags": [3, 5], }
 
 # hyper = {"latent_dimension": list(np.arange(2, 22, 2, dtype=int))}
 
