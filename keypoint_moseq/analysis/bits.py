@@ -103,7 +103,7 @@ if __name__ == '__main__':
     # Plot data LL, and bits across CV train splits
     run_nlags_0_df = llh_df[llh_df['hyp'] == 'nlags'][llh_df['hyp_idx'] == '0'].sort_values(['cv_idx', 'batch']).groupby(['cv_idx'])
 
-    # # plot log_Y_given_model
+    # # plot log_Y_given_model, non-normalized so probably doesn't make sense
     # data_ll = np.array(run_nlags_0_df.agg({'log_Y_given_model': 'sum'})['log_Y_given_model'].tolist()).Tq
     # print(data_ll)
     # plt.plot(data_ll, linewidth=1)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     # plt.ylabel('log(Y|slds)')
     # plt.title('log(Y|slds) for CV splits')
     #
-    # # plot
+    # # plot bits/frame normalized w.r.t mvn
     # bits_ = np.array(run_nlags_0_df.agg({'bits':'sum'})['bits'].tolist()).T
     # print(bits_)
     # plt.plot(bits_)

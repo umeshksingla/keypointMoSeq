@@ -96,7 +96,7 @@ def fitCV(sleap_paths, project_dir, use_instance):
 
     kfold = KFold(n_splits=np.min([5, len(sleap_paths)]))
     for cv_split, (tr, te) in enumerate(kfold.split(sleap_paths)):
-        print(">>> tr", tr, "te", te)
+        print(f">>> cv_split {cv_split}: tr", tr, "te", te)
         train_paths, test_paths = sleap_paths[tr], sleap_paths[te]
 
         # Create directories to save results for this train split
@@ -112,7 +112,7 @@ def fitCV(sleap_paths, project_dir, use_instance):
         test_log_y_and_model, test_log_ll = get_test_probs(test_paths, train_checkpoint_path,
                                                            project_dir, cv_split_save_dir, use_instance)
 
-        print(f"Test LLs for split: (tr={tr}, te={te}): "
+        print(f"Test LLs for cv_split {cv_split}: (tr={tr}, te={te}): "
               f"\tlog(y,model)=", test_log_y_and_model, "\tlog(y|model)=", test_log_ll)
 
     return
