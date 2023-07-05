@@ -312,8 +312,6 @@ def format_data(coordinates, *, confidences=None, keys=None,
 
 
 def save_llh(llh, project_dir, llh_path=None):
-    llh['train'] = {k: np.array(llh['train'][k]) for k in llh['train']}
-    llh['test'] = {k: np.array(llh['test'][k]) for k in llh['test']}
     if llh_path is None:
         llh_path = os.path.join(project_dir, 'llh.p')
     joblib.dump(llh, llh_path)
@@ -356,22 +354,22 @@ def load_last_checkpoint(project_dir):
 
 
 
-def load_checkpoint(project_dir=None, name=None, path=None):
+def load_checkpoint(save_dir=None, name=None, path=None):
     if path is None: 
-        assert project_dir is not None and name is not None, fill(
-            '``name`` and ``project_dir`` are required if no ``path`` is given.')
-        path = os.path.join(project_dir,name,'checkpoint.p')
+        assert save_dir is not None and name is not None, fill(
+            '``name`` and ``save_dir`` are required if no ``path`` is given.')
+        path = os.path.join(save_dir,name,'checkpoint.p')
     return joblib.load(path)
 
 
-def save_checkpoint(model, data, history, batch_info, iteration, 
-                    path=None, name=None, project_dir=None,
+def save_checkpoint(model, data, history, batch_info, batch, iteration,
+                    path=None, name=None, save_dir=None,
                     save_history=True, save_states=True, save_data=True):
     
     if path is None: 
-        assert project_dir is not None and name is not None, fill(
-            '``name`` and ``project_dir`` are required if no ``path`` is given.')
-        path = os.path.join(project_dir,name,'checkpoint.p')
+        assert save_dir is not None and name is not None, fill(
+            '``name`` and ``save_dir`` are required if no ``path`` is given.')
+        path = os.path.join(save_dir,name,'checkpoint.p')
 
     dirname = os.path.dirname(path)
     if not os.path.exists(dirname): 
@@ -379,12 +377,14 @@ def save_checkpoint(model, data, history, batch_info, iteration,
         os.makedirs(dirname)
     
     save_dict = {
-        'batch_info': batch_info,
-        'iteration' : iteration,
-        'hypparams' : jax.device_get(model['hypparams']),
-        'params'    : jax.device_get(model['params']), 
-        'seed'      : np.array(model['seed']),
-        'name'      : name}
+        'batch_info'    : batch_info,
+        'current_batch' : batch,
+        'iteration'     : iteration,
+        'hypparams'     : jax.device_get(model['hypparams']),
+        'params'        : jax.device_get(model['params']),
+        'seed'          : np.array(model['seed']),
+        'name'          : name
+    }
 
     if save_data: 
         save_dict.update(jax.device_get(data))

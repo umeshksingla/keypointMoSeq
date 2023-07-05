@@ -1,6 +1,6 @@
 #!/bin/bash
 
-video_dir="/tigress/MMURTHY/usingla/sampledata5"
+video_dir="/tigress/MMURTHY/usingla/sampledata9"
 save_dir="/scratch/gpfs/us3519/fit_pair/project"
 
 run_script="generate_hyperparams_configs.py"

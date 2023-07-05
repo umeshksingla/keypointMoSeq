@@ -16,7 +16,7 @@ a list of project_dirs.
 
 import numpy as np
 from keypoint_moseq.project.fit_utils import find_sleap_paths, load_data_from_expts, run_fit_PCA, fit_keypoint_ARHMM, \
-    resume_slds_fitting_to_new_data, fit_mvn, print_ll, calculate_test_bits, calculate_train_bits
+    resume_slds_fitting_to_new_data
 from keypoint_moseq.run.hyperparams.get_test_probs import get_test_probs
 from keypoint_moseq.project.io import save_llh, load_llh
 
@@ -55,7 +55,7 @@ def sample_paths_for_initialization(sleap_paths):
     return init_paths
 
 
-def train(train_paths, project_dir, use_instance):
+def train(train_paths, project_dir, cv_split_save_dir, use_instance):
 
     init_paths = sample_paths_for_initialization(train_paths)
 
@@ -63,16 +63,16 @@ def train(train_paths, project_dir, use_instance):
     data, batch_info = load_data_from_expts(init_paths, project_dir, use_instance)
 
     # Fit PCA
-    run_fit_PCA(data, project_dir)
+    run_fit_PCA(data, project_dir, cv_split_save_dir)
 
     # Initialize and fit ARHMM
-    _, _, name = fit_keypoint_ARHMM(project_dir, data, batch_info)
+    _, _, name = fit_keypoint_ARHMM(project_dir, cv_split_save_dir, data, batch_info)
 
     # Fit SLDS
-    checkpoint_path = os.path.join(project_dir, name, 'checkpoint.p')
-    name, llh = resume_slds_fitting_to_new_data(checkpoint_path, project_dir, train_paths)
+    arhmm_checkpoint_path = os.path.join(cv_split_save_dir, name, 'checkpoint.p')
+    name = resume_slds_fitting_to_new_data(train_paths, arhmm_checkpoint_path, project_dir, cv_split_save_dir)
 
-    return name, llh
+    return name
 
 
 def fitCV(sleap_paths, project_dir, use_instance):
@@ -89,44 +89,32 @@ def fitCV(sleap_paths, project_dir, use_instance):
     """
     sleap_paths = np.array(sleap_paths)
 
-    llh = {
-        'train': {'log_Y_and_model': [], 'log_Y_given_model': [], 'log_Y_given_mvn': [], 'n_samples': []},
-        'test': {'log_Y_and_model': [], 'log_Y_given_model': [], 'log_Y_given_mvn': [], 'n_samples': []},
-    }
-
     if len(sleap_paths) <= 1:
-        model_name, train_llh = train(sleap_paths, project_dir, use_instance)
+        model_name = train(sleap_paths, project_dir, project_dir, use_instance)
         print("model_name", model_name)
-        llh['train']['log_Y_and_model'].append(train_llh['log_Y_and_model'])
-        llh['train']['log_Y_given_model'].append(train_llh['log_Y_given_model'])
-        return llh
+        return
 
     kfold = KFold(n_splits=np.min([5, len(sleap_paths)]))
-    for tr, te in kfold.split(sleap_paths):
+    for cv_split, (tr, te) in enumerate(kfold.split(sleap_paths)):
         print(">>> tr", tr, "te", te)
         train_paths, test_paths = sleap_paths[tr], sleap_paths[te]
 
-        model_name, train_llh = train(train_paths, project_dir, use_instance)
-        train_log_Y_given_mvn, n_samples = fit_mvn(train_paths, project_dir, use_instance)
-        print("model_name:", model_name)
-        print(train_llh)
-        llh['train']['log_Y_and_model'].append(train_llh['log_Y_and_model'])
-        llh['train']['log_Y_given_model'].append(train_llh['log_Y_given_model'])
-        llh['train']['log_Y_given_mvn'].append(train_log_Y_given_mvn)
-        llh['train']['n_samples'].append(n_samples)
+        # Create directories to save results for this train split
+        cv_split_save_dir = os.path.join(project_dir, f'cv{cv_split}')
+        os.makedirs(cv_split_save_dir, exist_ok=False)
 
-        test_log_y_and_model, test_log_ll = get_test_probs(test_paths, project_dir, model_name, use_instance)
-        test_log_Y_given_mvn, n_samples = fit_mvn(test_paths, project_dir, use_instance)
-        llh['test']['log_Y_and_model'].append([test_log_y_and_model])
-        llh['test']['log_Y_given_model'].append([test_log_ll])
-        llh['test']['log_Y_given_mvn'].append(test_log_Y_given_mvn)
-        llh['test']['n_samples'].append(n_samples)
+        # train
+        model_name = train(train_paths, project_dir, cv_split_save_dir, use_instance)
+        print("model_name:", model_name)
+
+        # test
+        train_checkpoint_path = os.path.join(cv_split_save_dir, model_name, 'checkpoint.p')
+        test_log_y_and_model, test_log_ll = get_test_probs(test_paths, train_checkpoint_path,
+                                                           project_dir, cv_split_save_dir, use_instance)
 
         print(f"Test LLs for split: (tr={tr}, te={te}): "
               f"\tlog(y,model)=", test_log_y_and_model, "\tlog(y|model)=", test_log_ll)
 
-    print("llh", llh)
-    save_llh(llh, project_dir)
     return
 
 
@@ -150,11 +138,6 @@ def main():
     # Do cross validation
     fitCV(sleap_paths, project_dir, use_instance)
 
-    # Plot training and test loglikelihoods
-    llh = load_llh(project_dir)
-    print_ll(llh)
-    calculate_train_bits(llh['train'])
-    calculate_test_bits(llh['test'])
     return
 
 
