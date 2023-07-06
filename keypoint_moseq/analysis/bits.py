@@ -96,29 +96,30 @@ def process_checkpoints(project_dir):
 
 if __name__ == '__main__':
 
-    project_dir = '/scratch/gpfs/us3519/fit_pair/project/2023_07_05-02_33_31/'
+    project_dir = '/scratch/gpfs/us3519/fit_pair/project/2023_07_05-02_29_02/'
     llh_df = process_checkpoints(project_dir)
     # save_llh(llh_df, project_dir)
 
     # Plot data LL, and bits across CV train splits
-    run_nlags_0_df = llh_df[llh_df['hyp'] == 'nlags'][llh_df['hyp_idx'] == '0'].sort_values(['cv_idx', 'batch']).groupby(['cv_idx'])
+    run_nlags_0_df = llh_df[llh_df['hyp'] == 'nlags'][llh_df['hyp_idx'] == '0'][llh_df['cv_idx'] < 'cv4'].sort_values(['cv_idx', 'batch']).groupby(['cv_idx'])
 
     # # plot log_Y_given_model, non-normalized so probably doesn't make sense
     # data_ll = np.array(run_nlags_0_df.agg({'log_Y_given_model': 'sum'})['log_Y_given_model'].tolist()).Tq
     # print(data_ll)
     # plt.plot(data_ll, linewidth=1)
     # plt.errorbar(np.arange(len(data_ll)), np.mean(data_ll, axis=1), yerr=np.std(data_ll, axis=1), fmt='-o')
-    # plt.xlabel('iterations')
+    # plt.xlabel('training iterations')
     # plt.ylabel('log(Y|slds)')
     # plt.title('log(Y|slds) for CV splits')
     #
     # # plot bits/frame normalized w.r.t mvn
-    # bits_ = np.array(run_nlags_0_df.agg({'bits':'sum'})['bits'].tolist()).T
-    # print(bits_)
-    # plt.plot(bits_)
-    # plt.xlabel('iterations')
-    # plt.ylabel('information w.r.t. mvn')
-    # plt.title('bits/frame for CV splits')
+    bits_ = np.array(run_nlags_0_df.agg({'bits':'sum'})['bits'].tolist()).T
+    print(bits_)
+    plt.plot(bits_)
+    plt.xlabel('training iterations')
+    plt.ylabel('information w.r.t. mvn')
+    plt.title('bits/frame for CV splits')
+    plt.savefig('bits.png')
     #
     # plt.show()
 

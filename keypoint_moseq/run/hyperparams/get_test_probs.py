@@ -74,20 +74,20 @@ def find_checkpoint(project_dir):
     return None
 
 
-def get_test_probs(test_paths, checkpoint_path, project_dir, cv_split_save_dir, use_instance):
+def get_test_probs(test_paths, checkpoint_path, project_dir, save_dir, use_instance):
 
     # Load checkpoint
     checkpoint = kpm.load_checkpoint(path=checkpoint_path)
 
     # Load checkpoint and config
     config = kpm.load_config(project_dir)
-    pca = kpm.load_pca(cv_split_save_dir)
+    pca = kpm.load_pca(save_dir)
     coordinates = kpm.load_keypoints_from_slp_list(test_paths, use_instance)
     confidences = None
 
     # Evaluate model on test data
     _, model, data = kpm.apply_model(coordinates=coordinates, confidences=confidences,
-                        save_dir=cv_split_save_dir, **checkpoint, **config,
+                        save_dir=save_dir, **checkpoint, **config,
                         plot_every_n_iters=0, use_saved_states=False,
                         num_iters=1, pca=pca)
 
