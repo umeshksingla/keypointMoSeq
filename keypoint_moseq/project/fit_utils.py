@@ -12,6 +12,7 @@ from keypoint_moseq.project.viz import plot_progress
 from keypoint_moseq.project.io import save_checkpoint
 from keypoint_moseq.run.constants import EXPT_BATCH_LEN
 from jax_moseq.models.keypoint_slds import model_likelihood
+from scipy.stats import multivariate_normal
 
 
 def find_sleap_paths(video_dir):
@@ -60,6 +61,23 @@ def load_data_from_expts(sleap_paths, project_dir, use_instance):
     coordinates = load_coords_from_expts(sleap_paths, project_dir, use_instance)
     data, batch_info = kpm.format_data(coordinates, **config)
     return data, batch_info
+
+
+def fit_mvn(data):
+    """
+    Multivariate gaussian model for the pose prediction to get the lower bound
+    """
+
+    n_features = data['Y'].shape[-2]
+    d = data['Y'].shape[-1]
+
+    x = data['Y'][data['mask'] > 0]
+    x = x.reshape((-1, n_features * d))
+
+    p = multivariate_normal(mean=np.mean(x, axis=0), cov=np.cov(x.T)).pdf(x)
+    p = np.maximum(p, 1e-100)
+    log_Y_given_mvn = np.sum(np.log(p))
+    return log_Y_given_mvn
 
 
 def run_fit_PCA(data, project_dir, save_dir):

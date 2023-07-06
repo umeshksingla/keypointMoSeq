@@ -7,27 +7,9 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import multivariate_normal
 
 from keypoint_moseq.project.io import load_checkpoint, save_llh
-from keypoint_moseq.project.fit_utils import calculate_ll
-
-
-def fit_mvn(data):
-    """
-    Multivariate gaussian model for the pose prediction to get the lower bound
-    """
-
-    n_features = data['Y'].shape[-2]
-    d = data['Y'].shape[-1]
-
-    x = data['Y'][data['mask'] > 0]
-    x = x.reshape((-1, n_features * d))
-
-    p = multivariate_normal(mean=np.mean(x, axis=0), cov=np.cov(x.T)).pdf(x)
-    p = np.maximum(p, 1e-100)
-    log_Y_given_mvn = np.sum(np.log(p))
-    return log_Y_given_mvn
+from keypoint_moseq.project.fit_utils import calculate_ll, fit_mvn
 
 
 def get_logll_from_checkpoint(ckp):
@@ -79,7 +61,7 @@ def process_checkpoints(project_dir):
                     b = ckp['current_batch']
                     b_log_Y_and_model, b_log_Y_given_model, b_n_samples, b_log_Y_given_mvn = get_logll_from_checkpoint(ckp)
                     b_n_iters = list(ckp['history'].keys())
-                    b_bits = ((np.array(b_log_Y_given_model) - b_log_Y_given_mvn) / b_n_samples).tolist()
+                    b_bits = np.log2(np.exp((np.array(b_log_Y_given_model) - b_log_Y_given_mvn) / b_n_samples)).tolist()
 
                     log_Y_and_model.append(b_log_Y_and_model)
                     log_Y_given_model.append(b_log_Y_given_model)

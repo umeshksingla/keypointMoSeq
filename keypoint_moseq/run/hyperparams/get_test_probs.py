@@ -14,10 +14,11 @@ parameters from the results.h5, find the model likelihood of the data
 and 
 
 """
-
+import numpy as np
 from jax_moseq.models import keypoint_slds
 import keypoint_moseq as kpm
-from keypoint_moseq.project.fit_utils import find_sleap_paths, calculate_ll
+from keypoint_moseq.project.fit_utils import find_sleap_paths, calculate_ll, fit_mvn
+from keypoint_moseq.project.io import save_llh
 import os
 import argparse
 from rich.pretty import pprint
@@ -94,7 +95,21 @@ def get_test_probs(test_paths, checkpoint_path, project_dir, save_dir, use_insta
     # Compute log likelihoods
     log_Y_and_model, log_Y_given_model = calculate_ll(model['states'], model['params'],
                                                       model['hypparams'], model['noise_prior'], data)
-    return log_Y_and_model, log_Y_given_model
+    log_Y_given_mvn = fit_mvn(data)
+    n_samples = np.sum(data['mask']).astype(int)
+    nats = ((log_Y_given_model - log_Y_given_mvn) / n_samples)
+    bits = np.log2(np.exp(nats))
+
+    test_llh = {
+        'log_Y_and_model': log_Y_and_model,
+        'log_Y_given_model': log_Y_given_model,
+        'log_Y_given_mvn': log_Y_given_mvn,
+        'n_samples': n_samples,
+        'bits': bits
+    }
+
+    save_llh(llh_path=os.path.join(save_dir, 'test_llh.p'))
+    return bits
 
 
 if __name__ == "__main__":
